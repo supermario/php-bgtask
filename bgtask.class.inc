@@ -74,7 +74,7 @@ class bgTask {
         return $this->exitcode;
     }
     public function exec($cmd) {
-        if (empty($pid)) {
+        if (empty($this->pid)) {
             // Thanks to William Pursell for this lovely solution
             // Non-blocking shell script to:
             //      - execute a command
