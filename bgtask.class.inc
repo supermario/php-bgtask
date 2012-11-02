@@ -97,9 +97,9 @@ class bgTask {
 			if ($this->function_exists('exec'))
 				@exec($cmd_prepared);
 			elseif ($this->function_exists('system'))
-				@system($cmd);
+				@system($cmd_prepared);
 			elseif ($this->function_exists('passthru'))
-				@passthru($cmd);
+				@passthru($cmd_prepared);
             $this->status = bgTask::STATUS_STARTING;
         } else {
             // user cannot start a new task with the same alias until the old task has reported completion (STATUS_COMPLETE)
