@@ -100,6 +100,8 @@ class bgTask {
 				@system($cmd_prepared);
 			elseif ($this->function_exists('passthru'))
 				@passthru($cmd_prepared);
+            else
+                trigger_error("bgTask found no available system call commands, please see README and check your environment config", E_USER_ERROR);
             $this->status = bgTask::STATUS_STARTING;
         } else {
             // user cannot start a new task with the same alias until the old task has reported completion (STATUS_COMPLETE)
