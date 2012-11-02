@@ -64,9 +64,20 @@ class bgTask {
         $this->setPid();
         $this->setStatus();
     }
-    // returns the status of the task as at creation of bgTask object
+    // returns the status of the task
+    // this value is static as of creation of bgTask object, or latest reload
+    // to recheck the status and output, see reload()
     public function status() {
         return $this->status;
+    }
+    // reloads the bgtask status code and output, returns the status
+    // do not rely on this method to get the status repeatedly, only use it when
+    // you want to explicitly reload the output and pid status during script
+    // execution, else you may suffer synchronicity issues
+    public function reload() {
+        $this->setPid();
+        $this->setStatus();
+        return $this->status();
     }
     // returns the output of the task as at creation of bgTask object
     public function output() {
@@ -142,6 +153,9 @@ class bgTask {
     // internally determines and stores the status for this task at the current point in time
     private function setStatus() {
         if (empty($this->pid)) {
+            $this->status = bgTask::STATUS_EMPTY;
+        } else if ($this->status == bgTask::STATUS_COMPLETE || $this->status == bgTask::STATUS_EMPTY) {
+            // When reloading a completed or empty task, new status is empty
             $this->status = bgTask::STATUS_EMPTY;
         } else {
             $this->loadOutput();
