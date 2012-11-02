@@ -114,7 +114,7 @@ class bgTask {
 			return false;
 
 		$disabled = explode(', ', @ini_get('disable_functions'));
-		if (in_array($funct, $disabled))
+		if (in_array($func, $disabled))
 			return false;
 
 		if (extension_loaded('suhosin')) {
