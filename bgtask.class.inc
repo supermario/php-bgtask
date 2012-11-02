@@ -60,12 +60,12 @@ class bgTask {
         $this->outfile = $this->tempdir . "/" . $hash . ".out.txt";
         $this->pidfile = $this->tempdir . "/" . $hash . ".pid.txt";
         $this->exitfile = $this->tempdir . "/" . $hash . ".exit.txt";
+        // attempt to load the pid and set the task status
+        $this->setPid();
+        $this->setStatus();
     }
     // returns the status of the task as at creation of bgTask object
     public function status() {
-		// attempt to load the pid and set the task status
-        $this->setPid();
-        $this->setStatus();
         return $this->status;
     }
     // returns the output of the task as at creation of bgTask object
