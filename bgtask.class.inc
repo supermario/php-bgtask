@@ -24,7 +24,7 @@ class bgTask {
 
     // status is determined once at creation of the object
     // to re-query the task status a new object needs to be created
-    private $status = bgTask::STATUS_EMPTY;
+    private $status = null;
     // the pid of this task, if it has commenced running
     private $pid = null;
     // the output of this task as at creation of the object
