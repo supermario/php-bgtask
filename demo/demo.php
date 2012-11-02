@@ -39,7 +39,7 @@ if ($demoTask->status() == bgTask::STATUS_EMPTY) {
     // this means it's up to you to save the output/exitcode somehwere (i.e. into a database) if you wish to retain it further
     // in this demo we simply display it to the user, and no history gets kept
 
-} else if ($demotask->status() == bgTask::STATUS_ERROR) {
+} else if ($demoTask->status() == bgTask::STATUS_ERROR) {
 
     print "There was an error with our task. It's output was:";
     print "<pre>".$demoTask->output()."</pre>";
