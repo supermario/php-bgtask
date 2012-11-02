@@ -60,12 +60,12 @@ class bgTask {
         $this->outfile = $this->tempdir . "/" . $hash . ".out.txt";
         $this->pidfile = $this->tempdir . "/" . $hash . ".pid.txt";
         $this->exitfile = $this->tempdir . "/" . $hash . ".exit.txt";
-        // attempt to load the pid and set the task status
-        $this->setPid();
-        $this->setStatus();
     }
     // returns the status of the task as at creation of bgTask object
     public function status() {
+		// attempt to load the pid and set the task status
+        $this->setPid();
+        $this->setStatus();
         return $this->status;
     }
     // returns the output of the task as at creation of bgTask object
@@ -94,13 +94,42 @@ class bgTask {
                     echo $? > %s                # Write exit status to file
                     ' & } | read                # Background previous command set, block on read until pidfile exists"
             , $cmd, $this->outfile, $cmd, $this->outfile, $this->pidfile, $this->exitfile);
-            exec($cmd_prepared, $cmd_out);
+			if ($this->function_exists('exec'))
+				@exec($cmd_prepared);
+			elseif ($this->function_exists('system'))
+				@system($cmd_prepared);
+			elseif ($this->function_exists('passthru'))
+				@passthru($cmd_prepared);
             $this->status = bgTask::STATUS_STARTING;
         } else {
             // user cannot start a new task with the same alias until the old task has reported completion (STATUS_COMPLETE)
             trigger_error("bgTask '{$this->alias}' is still active", E_USER_ERROR);
         }
     }
+
+	// checks if a function exists in the current environment. Some shared hosting
+	// environments disable certain functions
+	private function function_exists($func) {
+		if(!function_exists($func))
+			return false;
+
+		$disabled = explode(', ', @ini_get('disable_functions'));
+		if (in_array($funct, $disabled))
+			return false;
+
+		if (extension_loaded('suhosin')) {
+			$suhosin = @ini_get("suhosin.executor.func.blacklist");
+			if (empty($suhosin) == false) {
+				$suhosin = explode(',', $suhosin);
+				$blacklist = array_map('trim', $suhosin);
+				$blacklist = array_map('strtolower', $blacklist);
+				if(in_array($func, $blacklist))
+					return false;
+			}
+		}
+		return true;
+	}
+
     // internally loads and stores the pid value for this task if possible
     private function setPid() {
         $this->pid = null;
