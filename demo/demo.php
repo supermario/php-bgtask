@@ -36,7 +36,7 @@ if ($demoTask->status() == bgTask::STATUS_EMPTY) {
 } else if ($demoTask->status() == bgTask::STATUS_COMPLETE) {
 
     // Task has completed
-    print "Our task has completed. It's final output was:";
+    print "Our task has completed. Its final output was:";
     print "<pre>".$demoTask->output()."</pre>";
 
     // Once a task has been polled with a result of STATUS_COMPLETE, all temp files for that bgTask are destroyed

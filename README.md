@@ -11,7 +11,7 @@ See demo.php in the demo folder for usage example and basic documentation
 Requirements
 ------------
 
-Your environment must have one of the [exec](http://php.net/manual/en/function.exec.php), [system](http://php.net/manual/en/function.system.php) or [passthru](http://php.net/manual/en/function.passthru.php) PHP functions available in order for this class to work.
+Your environment must have one of the [shell_exec](http://php.net/manual/en/function.shell-exec.php), [exec](http://php.net/manual/en/function.exec.php) or [system](http://php.net/manual/en/function.system.php) PHP functions available in order for this class to work.
 
 If you're unsure, run demo.php for a quick test.
 

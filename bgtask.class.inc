@@ -46,6 +46,11 @@ class bgTask {
 
     public function __construct($alias, $tempdir = null) {
 
+        // Ensure an executor is available, otherwise bgTask cannot function
+        $executor = $this->_executor();
+        if (!$executor)
+            trigger_error("bgTask found no available system call commands, please see README and check your environment config", E_USER_ERROR);
+
         // If no tempdir has been specified, attempt to use 'bgtasks' folder in same location as class file
         $this->tempdir = (is_null($tempdir)) ? dirname(__FILE__) . "/bgtasks" : $tempdir ;
 
@@ -62,8 +67,8 @@ class bgTask {
         $this->pidfile = $this->tempdir . "/" . $hash . ".pid.txt";
         $this->exitfile = $this->tempdir . "/" . $hash . ".exit.txt";
         // Attempt to load the pid and set the task status
-        $this->setPid();
-        $this->setStatus();
+        $this->_setPid();
+        $this->_setStatus();
     }
     // returns the status of the task
     // this value is static as of creation of bgTask object, or latest reload
@@ -76,8 +81,8 @@ class bgTask {
     // you want to explicitly reload the output and pid status during script
     // execution, else you may suffer synchronicity issues
     public function reload() {
-        $this->setPid();
-        $this->setStatus();
+        $this->_setPid();
+        $this->_setStatus();
         return $this->status();
     }
     // returns the output of the task as at creation of bgTask object
@@ -88,6 +93,8 @@ class bgTask {
     public function exitcode() {
         return $this->exitcode;
     }
+
+    // Executes a wrapped shell command that can then be tracked
     public function exec($cmd) {
         if (empty($this->pid)) {
             // Thanks to William Pursell for this lovely solution
@@ -106,24 +113,38 @@ class bgTask {
                     echo $? > %s                # Write exit status to file
                     ' & } | read                # Background previous command set, block on read until pidfile exists"
             , $cmd, $this->outfile, $cmd, $this->outfile, $this->pidfile, $this->exitfile);
-			if ($this->function_exists('exec'))
-				@exec($cmd_prepared);
-			elseif ($this->function_exists('system'))
-				@system($cmd_prepared);
-			elseif ($this->function_exists('passthru'))
-				@passthru($cmd_prepared);
-            else
-                trigger_error("bgTask found no available system call commands, please see README and check your environment config", E_USER_ERROR);
+
+            // Execute our prepared wrapper command
+            $this->_exec($cmd_prepared);
+
             $this->status = bgTask::STATUS_STARTING;
         } else {
-            // user cannot start a new task with the same alias until the old task has reported completion (STATUS_COMPLETE)
-            trigger_error("bgTask '{$this->alias}' is still active", E_USER_ERROR);
+            // User cannot start a new task with the same alias until the old task has reported completion (STATUS_COMPLETE)
+            trigger_error("bgTask '{$this->alias}' is still active, please start a task with an alternative alias", E_USER_ERROR);
         }
+    }
+
+    // Executes a shell command
+    // Note that output may be the last line (exec, system) or full output (shell_exec)
+    // depending on which command is available.
+    private function _exec($command) {
+        $executor = $this->_executor();
+        return $executor($command);
+    }
+
+    private function _executor() {
+        $functions = array('shell_exec','exec','system');
+        foreach ($functions as $function) {
+            if ($this->_function_exists($function)) {
+                return $function;
+            }
+        }
+        return false;
     }
 
 	// Checks if a function exists in the current environment. Some shared hosting
 	// environments disable certain functions
-	private function function_exists($func) {
+	private function _function_exists($func) {
 		if(!function_exists($func))
 			return false;
 
@@ -146,26 +167,27 @@ class bgTask {
 	}
 
     // Loads and stores the pid value for this task if possible
-    private function setPid() {
+    private function _setPid() {
         $this->pid = null;
         if (file_exists($this->pidfile)) {
             $this->pid = file_get_contents($this->pidfile);
         }
     }
     // Determines and stores the status for this task at the current point in time
-    private function setStatus() {
+    private function _setStatus() {
         if (empty($this->pid)) {
             $this->status = bgTask::STATUS_EMPTY;
         } else if ($this->status == bgTask::STATUS_COMPLETE || $this->status == bgTask::STATUS_EMPTY) {
             // When reloading a completed or empty task, new status is empty
             $this->status = bgTask::STATUS_EMPTY;
         } else {
-            $this->loadOutput();
-            $this->loadExitcode();
+            $this->_loadOutput();
+            $this->_loadExitcode();
 
             // Get the process status of our task by pid
-            $result = shell_exec(sprintf("ps %d", $this->pid));
-            if (count(preg_split("/\n/", $result)) > 2){
+            $result = $this->_exec(sprintf("ps %d | awk 'NR>1'", $this->pid));
+
+            if (!empty($result)){
                 $this->status = bgTask::STATUS_RUNNING;
             } else {
                 if ($this->exitcode == 0) {
@@ -174,24 +196,24 @@ class bgTask {
                     $this->status = bgTask::STATUS_ERROR;
                 }
                 // Now that the task is complete, clear out temp files
-                $this->clearFiles();
+                $this->_clearFiles();
             }
         }
     }
     // Loads and stores the task's output up till the current point in time
-    private function loadOutput() {
+    private function _loadOutput() {
         if (file_exists($this->outfile)) {
             $this->output = file_get_contents($this->outfile);
         }
     }
     // Loads and stores the task's exit code if it's completed
-    private function loadExitcode() {
+    private function _loadExitcode() {
         if (file_exists($this->exitfile)) {
             $this->exitcode = file_get_contents($this->exitfile);
         }
     }
     // Clears all temporary files
-    private function clearFiles() {
+    private function _clearFiles() {
         unlink($this->pidfile);
         unlink($this->outfile);
         unlink($this->exitfile);
