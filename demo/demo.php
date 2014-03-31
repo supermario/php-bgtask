@@ -4,6 +4,10 @@
  * A basic demo of the bgTask class capabilities.
  */
 
+// Ensure errors are displayed for the demo
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', true);
+
 
 // include the bgTask class
 require('../bgtask.class.inc');
@@ -25,19 +29,19 @@ $demoTask = new bgTask('demoTask');
 
 if ($demoTask->status() == bgTask::STATUS_EMPTY) {
 
-    // task is empty and ready to run a new command!
+    // Task is empty and ready to run a new command!
     $demoTask->exec($demoTaskCommand);
     print "We've started a new bgTask! Refresh to query it again and see any output it might have.";
 
 } else if ($demoTask->status() == bgTask::STATUS_COMPLETE) {
 
-    // task has completed
+    // Task has completed
     print "Our task has completed. It's final output was:";
     print "<pre>".$demoTask->output()."</pre>";
 
-    // once a task has been polled with a result of STATUS_COMPLETE, all temp files for that bgTask are destroyed
-    // this means it's up to you to save the output/exitcode somehwere (i.e. into a database) if you wish to retain it further
-    // in this demo we simply display it to the user, and no history gets kept
+    // Once a task has been polled with a result of STATUS_COMPLETE, all temp files for that bgTask are destroyed
+    // This means it's up to you to save the output/exitcode somewhere (i.e. into a database) if you wish to retain it further
+    // In this demo we simply display it to the user, and no history gets kept
 
 } else if ($demoTask->status() == bgTask::STATUS_ERROR) {
 
@@ -47,8 +51,9 @@ if ($demoTask->status() == bgTask::STATUS_EMPTY) {
 
 } else {
 
-    // task is already running, print out it's output thus far
+    // Task is already running, print out it's output thus far
     print "Our task is already running. Here is it's output so far:";
     print "<pre>".$demoTask->output()."</pre>";
+    print "Continue refreshing to check for futher output and completion.";
 
 }

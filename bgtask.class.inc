@@ -22,45 +22,46 @@ class bgTask {
     const STATUS_COMPLETE = 'complete';
     const STATUS_ERROR = 'error';
 
-    // status is determined once at creation of the object
-    // to re-query the task status a new object needs to be created
+    // Status is determined once at creation of the object
+    // To re-query the task status a new object needs to be created
     private $status = null;
-    // the pid of this task, if it has commenced running
+    // The pid of this task, if it has commenced running
     private $pid = null;
-    // the output of this task as at creation of the object
+    // The output of this task as at creation of the object
     private $output = "";
-    // the exit code of this task as at creation of the object
+    // The exit code of this task as at creation of the object
     private $exitcode = null;
 
-    // the temporary files where task data will be stored
+    // The temporary files where task data will be stored
     private $outfile = "";
     private $pidfile = "";
     private $exitfile = "";
 
-    // the user named alias for this task, used to retreive task data
+    // The user named alias for this task, used to retreive task data
     private $alias = "";
 
-    // the directory that will be used to store temporary files
-    // web user must have permissions on this folder, will attempt to create if non-existent
+    // The directory that will be used to store temporary files
+    // Web user must have permissions on this folder, will attempt to create if non-existent
     private $tempdir = null;
 
     public function __construct($alias, $tempdir = null) {
 
-        // if no tempdir has been specified, attempt to use 'bgtasks' folder in same location as class file
+        // If no tempdir has been specified, attempt to use 'bgtasks' folder in same location as class file
         $this->tempdir = (is_null($tempdir)) ? dirname(__FILE__) . "/bgtasks" : $tempdir ;
 
         $this->alias = $alias;
-        // create tempdir if it doesn't exists, check it's writeable
+
+        // Create tempdir if it doesn't exist, check it's writeable
         if (!file_exists($this->tempdir)) { mkdir($this->tempdir); }
         if (!is_writable($this->tempdir)) { trigger_error("bgtask temp directory ({$this->tempdir}) not writeable", E_USER_ERROR); }
-        // hash the alias for both privacy and security
+        // Hash the alias for both privacy and security
         // (otherwise user input is directly run in exec)
         $hash = md5($this->alias);
-        // set our out/pid/exit code filenames
+        // Set our out/pid/exit code filenames
         $this->outfile = $this->tempdir . "/" . $hash . ".out.txt";
         $this->pidfile = $this->tempdir . "/" . $hash . ".pid.txt";
         $this->exitfile = $this->tempdir . "/" . $hash . ".exit.txt";
-        // attempt to load the pid and set the task status
+        // Attempt to load the pid and set the task status
         $this->setPid();
         $this->setStatus();
     }
@@ -120,7 +121,7 @@ class bgTask {
         }
     }
 
-	// checks if a function exists in the current environment. Some shared hosting
+	// Checks if a function exists in the current environment. Some shared hosting
 	// environments disable certain functions
 	private function function_exists($func) {
 		if(!function_exists($func))
@@ -140,17 +141,18 @@ class bgTask {
 					return false;
 			}
 		}
+        // Function appears to be available
 		return true;
 	}
 
-    // internally loads and stores the pid value for this task if possible
+    // Loads and stores the pid value for this task if possible
     private function setPid() {
         $this->pid = null;
         if (file_exists($this->pidfile)) {
             $this->pid = file_get_contents($this->pidfile);
         }
     }
-    // internally determines and stores the status for this task at the current point in time
+    // Determines and stores the status for this task at the current point in time
     private function setStatus() {
         if (empty($this->pid)) {
             $this->status = bgTask::STATUS_EMPTY;
@@ -161,6 +163,7 @@ class bgTask {
             $this->loadOutput();
             $this->loadExitcode();
 
+            // Get the process status of our task by pid
             $result = shell_exec(sprintf("ps %d", $this->pid));
             if (count(preg_split("/\n/", $result)) > 2){
                 $this->status = bgTask::STATUS_RUNNING;
@@ -170,24 +173,24 @@ class bgTask {
                 } else {
                     $this->status = bgTask::STATUS_ERROR;
                 }
-
+                // Now that the task is complete, clear out temp files
                 $this->clearFiles();
             }
         }
     }
-    // internally loads and stores the task's output up till the current point in time
+    // Loads and stores the task's output up till the current point in time
     private function loadOutput() {
         if (file_exists($this->outfile)) {
             $this->output = file_get_contents($this->outfile);
         }
     }
-    // internally loads and stores the task's exit code if it's completed
+    // Loads and stores the task's exit code if it's completed
     private function loadExitcode() {
         if (file_exists($this->exitfile)) {
             $this->exitcode = file_get_contents($this->exitfile);
         }
     }
-    // clears all temporary files
+    // Clears all temporary files
     private function clearFiles() {
         unlink($this->pidfile);
         unlink($this->outfile);
