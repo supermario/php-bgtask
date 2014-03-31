@@ -21,3 +21,10 @@ Security
 In it's plain form this class allows a developer to run any desired command via PHP's exec()
 
 Allowing any user input to this class is allowing direct execution of user controlled input on your server
+
+Compatibility
+-------------
+
+bgTask should run on any *nix OS, and has been tested on OS X, and Debian/Ubuntu.
+
+Windows is currently unsupported.
